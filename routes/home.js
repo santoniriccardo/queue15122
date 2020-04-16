@@ -202,6 +202,35 @@ function post_add(req, res) {
         respond(req, res, "Error: " + error.message);
     });
 }
+function post_edit(req, res) {
+    var id = req.body.entry_id;
+    var question = req.body.question;
+
+    model.sql.transaction(function (t) {
+        return model.Entry.findByPk(id, {
+            transaction: t
+        }).then(function (entry) {
+            if (!entry) {
+                throw new Error("The student you were trying to help is not on the queue");
+            }
+            if (entry.status != 0) {
+                throw new Error("That student is already being helped");
+            }
+            // throw new Error("You don't have permission to help that student");
+            return entry.update({
+                question: question
+            }, { transaction: t });
+        })
+    }).then(function (result) {
+        entries_cache = null;
+        realtime.edit(id);
+        return waittimes.update();
+    }).then(function (waittimes) {
+        respond(req, res, null);
+    }).catch(function (error) {
+        respond(req, res, "Error: " + error.message);
+    });
+}
 
 function post_rem(req, res) {
     var id = req.body.entry_id;
@@ -279,6 +308,36 @@ function post_help(req, res) {
     }).then(function(waittimes) {
         respond(req, res, null);
     }).catch(function(error) {
+        respond(req, res, "Error: " + error.message);
+    });
+}
+
+function post_change_question(req, res) {
+    var id = req.body.entry_id;
+    var entry = null;
+
+    // Find the entry that should be removed
+    model.sql.transaction(function (t) {
+        if (!p.is_ta(req)) {
+            throw new Error("You don't have permission to help that student");
+        }
+        if (req.session.TA.helping_id) {
+            throw new Error("You are already helping a student");
+        }
+        return model.Entry.findByPk(id, {
+            transaction: t
+        }).then(function (entry) {
+            if (!entry) {
+                throw new Error("The student you were trying to help is not on the queue");
+            }
+        })
+    }).then(function (result) {
+        entries_cache = null;
+        realtime.changeQuestion(id, req.session.TA);
+        return waittimes.update();
+    }).then(function (waittimes) {
+        respond(req, res, "Sent change question message to student");
+    }).catch(function (error) {
         respond(req, res, "Error: " + error.message);
     });
 }
@@ -380,6 +439,10 @@ exports.post = function(req, res) {
         post_cancel(req, res);
     } else if (action == "DONE") {
         post_done(req, res);
+    } else if (action == "CHANGEQUESTION") {
+        post_change_question(req, res);
+    } else if (action == "EDIT") {
+        post_edit(req, res);
     } else {
         respond(req, res, "Invalid action: " + action);
     }

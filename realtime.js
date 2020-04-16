@@ -73,6 +73,21 @@ exports.remove = function(entry_id) {
     });
 };
 
+exports.edit = function (entry_id) {
+    exports.seq = exports.seq + 1;
+    if (!sio) {
+        console.log("ERROR: Socket.io is not initialized yet");
+        return;
+    }
+    sio.emit("cancel", {
+        seq: exports.seq,
+        id: entry_id,
+        data: {
+            question: entry.question
+        }
+    });
+};
+
 exports.help = function(entry_id, ta) {
     exports.seq = exports.seq + 1;
     if (!sio) {
@@ -97,6 +112,21 @@ exports.cancel = function(entry_id, ta_id) {
         return;
     }
     sio.emit("cancel", {
+        seq: exports.seq,
+        id: entry_id,
+        data: {
+            ta_id: ta_id
+        }
+    });
+};
+
+exports.changeQuestion = function (entry_id, ta_id) {
+    exports.seq = exports.seq + 1;
+    if (!sio) {
+        console.log("ERROR: Socket.io is not initialized yet");
+        return;
+    }
+    sio.emit("changeQuestion", {
         seq: exports.seq,
         id: entry_id,
         data: {

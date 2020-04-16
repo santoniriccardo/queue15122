@@ -2,6 +2,8 @@ const removeHtml = "<button class='entry-item remove-button hide waves-effect wa
 const cancelHtml = "<button class='entry-item cancel-button hide waves-effect waves btn-flat grey lighten-3 grey-text text-darken-2' name='action' value='CANCEL'>Cancel</button>";
 const doneHtml = "<button class='entry-item done-button hide waves-effect waves-light btn blue' name='action' value='DONE'>Done</button>";
 const helpHtml = "<button class='entry-item help-button hide waves-effect waves-light btn blue' name='action' value='HELP'>Help</button>";
+const changeQuestionHtml = "<button class='entry-item changeQuestion-button hide waves-effect waves btn-flat blue lighten-5 grey-text text-darken-2' name='action' value='CHANGEQUESTION'>Change Question</button>";
+
 
 const entryHtml = `
     <li class='collection-item'>
@@ -15,6 +17,7 @@ const entryHtml = `
                 </div>
                 <div class='entry-item entry-spacer'></div>
                 <div class='entry-item entry-container entry-buttons'>
+                    ${changeQuestionHtml}
                     ${removeHtml}
                     ${helpHtml}
                     ${cancelHtml}
@@ -89,6 +92,7 @@ function buildTAEntry(entry) {
         elt.find(".helping-text").html(`${entry.ta_full_name} is helping ${xHtml}`);
     } else if (!ta_helping_id) {
         if (ta_id) {
+            elt.find(".changeQuestion-button").removeClass("hide");
             elt.find(".remove-button").removeClass("hide");
             elt.find(".help-button").removeClass("hide");
         } else {
@@ -250,6 +254,23 @@ socket.on("add", function(message) {
     updateStatus();
 });
 
+
+socket.on("edit", function (message) {
+    checkAndUpdateSeq(message.seq);
+    if (ta_id == message.data.ta_id) {
+        //you just cancelled helping someone, this changes everything so reload
+        window.location.reload();
+        return;
+    }
+    $("#queue li").each(function(index, item) {
+        if ($(item).data("entryId") == message.id) {
+            $(item).find(".entry-question").html(`[WHAT] OKAY`);
+        }
+    });
+    positionOverlay();
+    updateStatus();
+});
+
 socket.on("remove", function(message) {
     checkAndUpdateSeq(message.seq);
     $("#queue li").each(function(index, item) {
@@ -258,6 +279,26 @@ socket.on("remove", function(message) {
                 $("#add_form").show();
             }
             $(item).remove();
+        }
+    });
+    positionOverlay();
+    updateStatus();
+});
+
+socket.on("changeQuestion", function(message) {
+    console.log("HERE2");
+    checkAndUpdateSeq(message.seq);
+    if (ta_id == message.data.ta_id) {
+        //you just cancelled helping someone, this changes everything so reload
+        window.location.reload();
+        return;
+    }
+
+    $("#queue li").each(function(index, item) {
+        if ($(item).data("entryId") == message.id) {
+            if ($(item).hasClass("me")) {
+                M.Modal.getInstance($("#change_question_modal")).open();
+            }
         }
     });
     positionOverlay();
