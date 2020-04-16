@@ -203,27 +203,37 @@ function post_add(req, res) {
     });
 }
 function post_edit(req, res) {
-    var id = req.body.entry_id;
     var question = req.body.question;
+    var user_id = req.session.user_id;
+    
+    console.log("edit");
+    console.log(question);
+    console.log(req.session.user_id)
 
     model.sql.transaction(function (t) {
-        return model.Entry.findByPk(id, {
+        return model.Entry.findOne({
+            where: {
+                user_id: user_id,
+                status: 0,
+            },
             transaction: t
         }).then(function (entry) {
             if (!entry) {
                 throw new Error("The student you were trying to help is not on the queue");
             }
+
             if (entry.status != 0) {
                 throw new Error("That student is already being helped");
             }
-            // throw new Error("You don't have permission to help that student");
+            
             return entry.update({
                 question: question
             }, { transaction: t });
         })
     }).then(function (result) {
+        // console.log(result.id);
         entries_cache = null;
-        realtime.edit(id);
+        realtime.edit(result.id);
         return waittimes.update();
     }).then(function (waittimes) {
         respond(req, res, null);
@@ -315,6 +325,7 @@ function post_help(req, res) {
 function post_change_question(req, res) {
     var id = req.body.entry_id;
     var entry = null;
+    console.log(id);
 
     // Find the entry that should be removed
     model.sql.transaction(function (t) {
@@ -330,6 +341,11 @@ function post_change_question(req, res) {
             if (!entry) {
                 throw new Error("The student you were trying to help is not on the queue");
             }
+            return entry.update({
+                status: 0,
+                help_time: null,
+                ta_id: null
+            }, { transaction: t });
         })
     }).then(function (result) {
         entries_cache = null;

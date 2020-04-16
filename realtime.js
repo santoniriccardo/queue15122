@@ -79,12 +79,13 @@ exports.edit = function (entry_id) {
         console.log("ERROR: Socket.io is not initialized yet");
         return;
     }
-    sio.emit("cancel", {
+    sio.emit("edit", {
         seq: exports.seq,
-        id: entry_id,
-        data: {
-            question: entry.question
-        }
+        id: entry_id
+    });
+    sio.to(ta_room).emit("edit", {
+        seq: exports.seq,
+        id: entry_id
     });
 };
 

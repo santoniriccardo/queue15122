@@ -257,16 +257,13 @@ socket.on("add", function(message) {
 
 socket.on("edit", function (message) {
     checkAndUpdateSeq(message.seq);
-    if (ta_id == message.data.ta_id) {
-        //you just cancelled helping someone, this changes everything so reload
-        window.location.reload();
-        return;
-    }
-    $("#queue li").each(function(index, item) {
-        if ($(item).data("entryId") == message.id) {
-            $(item).find(".entry-question").html(`[WHAT] OKAY`);
-        }
-    });
+    
+    // $("#queue li").each(function(index, item) {
+    //     $("#add_form").show();
+    //     if ($(item).data("entryId") == message.id) {
+    //         $(item).find(".entry-question").html(`[WHAT] OKAY`);
+    //     }
+    // });
     positionOverlay();
     updateStatus();
 });
@@ -282,14 +279,12 @@ socket.on("remove", function(message) {
         }
     });
     positionOverlay();
-    updateStatus();
 });
 
 socket.on("changeQuestion", function(message) {
-    console.log("HERE2");
     checkAndUpdateSeq(message.seq);
     if (ta_id == message.data.ta_id) {
-        //you just cancelled helping someone, this changes everything so reload
+        //you just asked for a new question helping someone, this changes everything so reload
         window.location.reload();
         return;
     }
@@ -297,6 +292,15 @@ socket.on("changeQuestion", function(message) {
     $("#queue li").each(function(index, item) {
         if ($(item).data("entryId") == message.id) {
             if ($(item).hasClass("me")) {
+
+                try {
+                    if (("Notification" in window) && (Notification.permission == "granted")) {
+                        var notification = new Notification("It's your turn to get help!");
+                    }
+                } catch (error) {
+                    console.log("There was an error showing a browser notification.");
+                }
+
                 M.Modal.getInstance($("#change_question_modal")).open();
             }
         }
