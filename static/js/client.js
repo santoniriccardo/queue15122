@@ -2,7 +2,7 @@ const removeHtml = "<button class='entry-item remove-button hide waves-effect wa
 const cancelHtml = "<button class='entry-item cancel-button hide waves-effect waves btn-flat grey lighten-3 grey-text text-darken-2' name='action' value='CANCEL'>Cancel</button>";
 const doneHtml = "<button class='entry-item done-button hide waves-effect waves-light btn blue' name='action' value='DONE'>Done</button>";
 const helpHtml = "<button class='entry-item help-button hide waves-effect waves-light btn blue' name='action' value='HELP'>Help</button>";
-const changeQuestionHtml = "<button class='entry-item changeQuestion-button hide waves-effect waves btn-flat blue lighten-5 grey-text text-darken-2' name='action' value='CHANGEQUESTION'>Change Question</button>";
+const changeQuestionHtml = "<button class='entry-item changeQuestion-button hide waves-effect waves btn-flat blue lighten-5 grey-text text-darken-2' name='action' value='CHANGEQUESTION'> CQ </button>";
 
 
 const entryHtml = `
@@ -295,13 +295,16 @@ socket.on("changeQuestion", function(message) {
 
                 try {
                     if (("Notification" in window) && (Notification.permission == "granted")) {
-                        var notification = new Notification("It's your turn to get help!");
+                        var notification = new Notification("A TA has requested you to update your question!");
                     }
                 } catch (error) {
                     console.log("There was an error showing a browser notification.");
                 }
 
                 M.Modal.getInstance($("#change_question_modal")).open();
+            } else if (ta_id) {
+                $(item).find(".remove-button").addClass("hide");
+                $(item).find(".help-button").addClass("hide");
             }
         }
     });
